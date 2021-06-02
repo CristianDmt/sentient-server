@@ -12,8 +12,7 @@ export class RedisIoAdapter extends IoAdapter {
 
     server.adapter(redisAdapter);
     server.use((socket, next) => {
-      console.log(socket.handshake);
-      socket.demo = 1;
+      console.log('Middleware...');
       return next();
     });
 

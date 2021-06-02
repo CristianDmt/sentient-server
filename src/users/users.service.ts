@@ -84,6 +84,10 @@ export class UsersService {
     return await user.update(profileData);
   }
 
+  decodeAuthToken(token: string): TokenInterface {
+    return jwt.verify(token, this.configService.get('auth.jwt.secret')) as TokenInterface;
+  }
+
   private generateUserToken(user: User): string {
     return jwt.sign({ userId: user.id } as TokenInterface,
       this.configService.get(CONFIG_TOKEN_SECRET),
