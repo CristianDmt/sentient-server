@@ -4,7 +4,7 @@ http:
 
 auth:
   jwt:
-    secret: "abc"
+    secret: "DgqOkW01ZAvJSbxI"
     expiration: "8h"
 
 db:

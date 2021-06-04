@@ -20,5 +20,6 @@ export interface IoConnectedClientInterface {
   companyId?: number;
   teamIds?: number[];
   inquiry?: InquiryInterface;
+  conversation?: string;
   to?: string;
 }

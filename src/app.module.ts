@@ -13,6 +13,7 @@ import { CompanyUser } from './companies/models/company-user.model';
 import { TeamUser } from './teams/models/team-user.model';
 import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import { RelayModule } from './relay/relay.module';
+import { ConversationsModule } from './conversations/conversations.module';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { RelayModule } from './relay/relay.module';
     UsersModule,
     TeamsModule,
     CompaniesModule,
-    RelayModule
+    RelayModule,
+    ConversationsModule
   ],
   controllers: [],
   providers: [AppService],

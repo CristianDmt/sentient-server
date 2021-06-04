@@ -4,9 +4,10 @@ import { Request, Response, NextFunction } from 'express';
 import { AUTHENTICATION_SCHEMA } from 'src/constants';
 import { ConfigService } from '@nestjs/config';
 import { TokenInterface } from '../interfaces/token.interface';
+import { CustomerTokenInterface } from '../interfaces/customer-token.interface';
 
 @Injectable()
-export class AuthenticationMiddleware implements NestMiddleware {
+export class CustomerConversationMiddleware implements NestMiddleware {
   constructor(
     private readonly configService: ConfigService
   ) { }
@@ -21,9 +22,9 @@ export class AuthenticationMiddleware implements NestMiddleware {
 
       if (token) {
         try {
-          req.jwt = jwt.verify(token, this.configService.get('auth.jwt.secret')) as TokenInterface;
+          req.jwt = jwt.verify(token, this.configService.get('auth.jwt.secret')) as CustomerTokenInterface;
 
-          if (!req.jwt.userId) {
+          if (!req.jwt.name || !req.jwt.inquiry || !req.jwt.conversation) {
             throw new UnauthorizedException(`Invalid authorization token.`);
           }
         } catch (error) {

@@ -6,7 +6,7 @@ import { InquiryInterface, IoConnectedClientInterface, IoConnectedClientType } f
 import { RelayService as RelayService } from './relay.service';
 
 const RELAY_MESSAGE = 'relay message';
-const RELAY_AGENT_MESSAGE = 'relay agent message';
+const RELAY_END_CONVERSATION = 'relay end conversation';
 const RELAY_AUTHENTICATION_ERROR = 'authentication error';
 
 const LOG_RELAY_MESSAGE = 'RelayMessage';
@@ -26,23 +26,41 @@ export class RelayGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   ) { }
 
   @SubscribeMessage(RELAY_MESSAGE)
-  onMessage(@MessageBody() data: string, @ConnectedSocket() client: Socket): { ack: boolean } {
+  async onMessage(@MessageBody() data: string, @ConnectedSocket() client: Socket): Promise<{ ack: boolean }> {
     this.logger.log(`Client {${client.id}} sent '${data}'`, LOG_RELAY_MESSAGE);
-    
+
+    await this.relayService.storeMessage(
+      this.getRelayClient(client).conversation,
+      this.getRelayClient(client).name, 
+      data
+    );
+
     if (this.waitingAgents[0] && this.waitingCustomers[0]) {
       this.connected[this.waitingAgents[0]].to = this.waitingCustomers[0];
       this.connected[this.waitingCustomers[0]].to = this.waitingAgents[0];
     }
 
-    if (this.connected[client.id].to) {
-      this.server.to(this.connected[client.id].to).emit(RELAY_MESSAGE, {
-        user: this.connected[client.id].name,
+    if (this.getRelayClient(client).to) {
+      this.server.to(this.getRelayClient(client).to).emit(RELAY_MESSAGE, {
+        user: this.getRelayClient(client).name,
         message: data,
         analysis: 0
       });
     }
     
     return { ack: true };
+  }
+
+  @SubscribeMessage(RELAY_END_CONVERSATION)
+  async onEndConversation(@MessageBody() data: string, @ConnectedSocket() client: Socket): Promise<{ ack: boolean }> {
+    if (this.getRelayClient(client).to) {
+      this.server.to(this.getRelayClient(client).to)
+      delete this.connected[this.getRelayClient(client).to].to;
+    }
+
+    client.disconnect();
+
+    return { ack: true }
   }
 
   afterInit(server: Server) {
@@ -77,7 +95,7 @@ export class RelayGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     else if (client.handshake.query.name && client.handshake.query.inquiry) {
       const name = client.handshake.query.name;
 
-      client.emit(RELAY_MESSAGE, { user: 'AUTO REPLY', message: `Please wait while we connect you with an agent...`});
+      client.emit(RELAY_MESSAGE, { user: -1, message: `Please wait while we connect you with an agent...`});
 
       this.addRelayClientCustomer(client, client.handshake.query.name, client.handshake.query.inquiry);
     } else {
